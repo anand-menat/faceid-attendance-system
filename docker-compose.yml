@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount SQLite database to persist data between container restarts
+      - ./backend/face_recognition.db:/app/backend/face_recognition.db
+      # Mount uploads directory to persist saved photos
+      - ./backend/uploads:/app/backend/uploads
+    environment:
+      - JWT_SECRET=supersecretkey_change_me_in_production
+      - ADMIN_USERNAME=admin
+      - ADMIN_PASSWORD=password
+    restart: unless-stopped

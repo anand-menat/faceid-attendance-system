@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Face Recognition Attendance System — Automated attendance tracking using real-time facial recognition powered by AI.">
+    <meta name="author" content="FaceID System">
+    <title>FaceID — Advanced Attendance</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script type="module" src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Toast Notification Container -->
+    <div id="toast-container" aria-live="polite"></div>
+
+    <!-- Login View (Shown when not authenticated) -->
+    <div id="login-container" class="login-wrapper">
+        <div class="login-card glass-panel">
+            <div class="logo">
+                <div class="logo-icon-wrapper">
+                    <i data-lucide="scan-face"></i>
+                </div>
+                <h2>FaceID System</h2>
+            </div>
+            <p class="login-subtitle">Sign in to manage attendance</p>
+            <form id="login-form">
+                <div class="input-group">
+                    <label for="login-username">Username</label>
+                    <div class="input-with-icon">
+                        <i data-lucide="user"></i>
+                        <input type="text" id="login-username" placeholder="admin" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="login-password">Password</label>
+                    <div class="input-with-icon">
+                        <i data-lucide="lock"></i>
+                        <input type="password" id="login-password" placeholder="••••••••" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn primary submit-btn" id="btn-login">
+                    Sign In <i data-lucide="arrow-right"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App Container (Hidden until authenticated) -->
+    <div id="app-container" class="app-container" style="display: none;">
+        <!-- Mobile Header -->
+        <div class="mobile-header">
+            <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="Toggle menu">
+                <i data-lucide="menu"></i>
+            </button>
+            <div class="logo">
+                <i data-lucide="scan-face"></i>
+                <h2>FaceID</h2>
+            </div>
+        </div>
+
+        <!-- Sidebar Overlay (mobile) -->
+        <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar glass-panel" id="sidebar">
+            <div class="logo">
+                <div class="logo-icon-wrapper">
+                    <i data-lucide="scan-face"></i>
+                </div>
+                <h2>FaceID</h2>
+            </div>
+            <ul class="nav-links">
+                <li class="active" data-target="dashboard">
+                    <i data-lucide="layout-dashboard"></i> <span>Dashboard</span>
+                </li>
+                <li data-target="register">
+                    <i data-lucide="user-plus"></i> <span>Register Student</span>
+                </li>
+                <li data-target="students">
+                    <i data-lucide="users"></i> <span>Students</span>
+                </li>
+                <li data-target="attendance">
+                    <i data-lucide="camera"></i> <span>Live Attendance</span>
+                </li>
+                <li data-target="logs">
+                    <i data-lucide="clipboard-list"></i> <span>Attendance Logs</span>
+                </li>
+            </ul>
+            <div class="sidebar-footer">
+                <button id="btn-logout" class="btn danger btn-sm" style="width: 100%; margin-bottom: 1rem;">
+                    <i data-lucide="log-out"></i> Logout
+                </button>
+                <div class="version-badge">v3.0 Advanced</div>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+
+            <!-- ===== Dashboard View ===== -->
+            <section id="dashboard" class="view active-view">
+                <header>
+                    <div class="page-title-group">
+                        <h1>Dashboard</h1>
+                        <p>Overview of your attendance system with real-time updates</p>
+                    </div>
+                    <div class="live-indicator">
+                        <span class="pulse-dot"></span> Live
+                    </div>
+                </header>
+                <div class="stats-grid">
+                    <div class="stat-card glass-panel">
+                        <div class="icon-wrapper blue">
+                            <i data-lucide="users"></i>
+                        </div>
+                        <div>
+                            <h3>Total Students</h3>
+                            <p class="stat-value" id="stat-students" data-target="0">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card glass-panel">
+                        <div class="icon-wrapper green">
+                            <i data-lucide="check-circle"></i>
+                        </div>
+                        <div>
+                            <h3>Today's Attendance</h3>
+                            <p class="stat-value" id="stat-attendance" data-target="0">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card glass-panel">
+                        <div class="icon-wrapper purple">
+                            <i data-lucide="trending-up"></i>
+                        </div>
+                        <div>
+                            <h3>Attendance Rate</h3>
+                            <p class="stat-value" id="stat-rate" data-target="0">0%</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dashboard Layout Grid -->
+                <div class="dashboard-grid">
+                    <!-- Chart Section -->
+                    <div class="chart-container glass-panel">
+                        <h3>7-Day Attendance Trend</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="attendanceChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="quick-actions">
+                        <h3>Quick Actions</h3>
+                        <div class="action-cards">
+                            <div class="action-card glass-panel" data-navigate="register">
+                                <i data-lucide="user-plus"></i>
+                                <h4>Register</h4>
+                            </div>
+                            <div class="action-card glass-panel" data-navigate="attendance">
+                                <i data-lucide="camera"></i>
+                                <h4>Live System</h4>
+                            </div>
+                            <div class="action-card glass-panel" data-navigate="logs">
+                                <i data-lucide="download"></i>
+                                <h4>Export</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== Register Student View ===== -->
+            <section id="register" class="view hidden-view">
+                <!-- Keep existing form structure, but wrap it for compactness -->
+                <header>
+                    <div class="page-title-group">
+                        <h1>Register Student</h1>
+                        <p>Enroll a new student with face data</p>
+                    </div>
+                </header>
+                <div class="form-container glass-panel">
+                    <form id="register-form">
+                        <div class="form-grid">
+                            <div class="input-group">
+                                <label for="reg-id">Student ID</label>
+                                <input type="number" id="reg-id" min="1" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="reg-name">Full Name</label>
+                                <input type="text" id="reg-name" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="reg-dept">Department</label>
+                                <input type="text" id="reg-dept" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="reg-course">Course</label>
+                                <input type="text" id="reg-course" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="reg-year">Year</label>
+                                <select id="reg-year" required>
+                                    <option value="">Select Year</option>
+                                    <option>1st Year</option>
+                                    <option>2nd Year</option>
+                                    <option>3rd Year</option>
+                                    <option>4th Year</option>
+                                    <option>5th Year</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label for="reg-sem">Semester</label>
+                                <select id="reg-sem" required>
+                                    <option value="">Select Semester</option>
+                                    <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+                                    <option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label for="reg-div">Division</label>
+                                <input type="text" id="reg-div" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="reg-roll">Roll No</label>
+                                <input type="number" id="reg-roll" min="1" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="reg-gender">Gender</label>
+                                <select id="reg-gender">
+                                    <option>Male</option><option>Female</option><option>Other</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label for="reg-dob">Date of Birth</label>
+                                <input type="date" id="reg-dob" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="reg-email">Email</label>
+                                <input type="email" id="reg-email" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="reg-phone">Phone</label>
+                                <input type="text" id="reg-phone" required>
+                            </div>
+                            <div class="input-group full-width">
+                                <label for="reg-address">Address</label>
+                                <input type="text" id="reg-address" required>
+                            </div>
+                            <div class="input-group full-width">
+                                <label for="reg-teacher">Teacher / Mentor</label>
+                                <input type="text" id="reg-teacher" required>
+                            </div>
+                        </div>
+
+                        <div class="photo-upload-section">
+                            <h3><i data-lucide="camera"></i> Face Capture</h3>
+                            <div class="webcam-capture-area">
+                                <video id="reg-video" autoplay playsinline></video>
+                                <canvas id="reg-canvas" style="display: none;"></canvas>
+                                <div class="camera-placeholder" id="reg-camera-placeholder">
+                                    <i data-lucide="video-off"></i>
+                                    <p>Camera is off</p>
+                                </div>
+                                <div class="controls">
+                                    <button type="button" id="btn-start-reg-cam" class="btn primary"><i data-lucide="video"></i> Start</button>
+                                    <button type="button" id="btn-capture-reg" class="btn secondary" disabled><i data-lucide="aperture"></i> Capture</button>
+                                </div>
+                            </div>
+                            <p id="reg-photo-status" class="status-text">No photo captured.</p>
+                        </div>
+
+                        <button type="submit" class="btn submit-btn" id="btn-submit-reg">
+                            <i data-lucide="user-check"></i> Register Student
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- ===== Students List View ===== -->
+            <section id="students" class="view hidden-view">
+                <header>
+                    <div class="page-title-group">
+                        <h1>Registered Students</h1>
+                        <p>View and manage all enrolled students</p>
+                    </div>
+                </header>
+                <div class="filter-bar glass-panel">
+                    <div class="search-input-wrapper">
+                        <i data-lucide="search"></i>
+                        <input type="text" id="student-search" placeholder="Search by name or email...">
+                    </div>
+                </div>
+                <div class="table-container glass-panel">
+                    <div class="table-loading" id="students-loading">
+                        <div class="spinner"></div>
+                        <p>Loading students...</p>
+                    </div>
+                    <table class="data-table" id="students-table">
+                        <thead>
+                            <tr>
+                                <th>Photo</th>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Department</th>
+                                <th>Roll No</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="students-tbody">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                    <div class="empty-state" id="students-empty" style="display:none;">
+                        <i data-lucide="user-x"></i>
+                        <h3>No students found</h3>
+                        <p>Register your first student to get started.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== Live Attendance View ===== -->
+            <section id="attendance" class="view hidden-view">
+                <header>
+                    <div class="page-title-group">
+                        <h1>Live Attendance Tracker</h1>
+                        <p>Detect and mark attendance automatically</p>
+                    </div>
+                </header>
+                <div class="attendance-container">
+                    <div class="camera-panel glass-panel">
+                        <video id="att-video" autoplay playsinline></video>
+                        <canvas id="att-canvas" style="display: none;"></canvas>
+                        <div class="camera-placeholder" id="att-camera-placeholder">
+                            <i data-lucide="video-off"></i>
+                            <p>Camera is off</p>
+                        </div>
+                        <div class="controls">
+                            <button id="btn-start-att-cam" class="btn primary"><i data-lucide="play"></i> Start System</button>
+                            <button id="btn-stop-att-cam" class="btn danger" disabled><i data-lucide="square"></i> Stop</button>
+                        </div>
+                    </div>
+                    <div class="recognition-results glass-panel">
+                        <h3><i data-lucide="activity"></i> Recognition Status</h3>
+                        <div id="att-status" class="status-box info">
+                            System Idle. Start camera to begin.
+                        </div>
+                        <div class="recent-scans">
+                            <h4>Recent Scans (Live)</h4>
+                            <ul id="scan-list">
+                                <!-- Populated dynamically -->
+                            </ul>
+                            <div class="empty-scans" id="empty-scans">
+                                <p>No scans yet. Start the camera to begin recognition.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== Attendance Logs View ===== -->
+            <section id="logs" class="view hidden-view">
+                <header>
+                    <div class="page-title-group">
+                        <h1>Attendance Logs</h1>
+                        <p>View and export historical attendance data</p>
+                    </div>
+                </header>
+                <div class="filter-bar glass-panel">
+                    <div class="search-input-wrapper">
+                        <i data-lucide="search"></i>
+                        <input type="text" id="log-search-name" placeholder="Search by student name...">
+                    </div>
+                    <div class="filter-group">
+                        <input type="date" id="log-filter-date" class="filter-input">
+                        <button id="btn-filter-logs" class="btn primary btn-sm"><i data-lucide="filter"></i> Filter</button>
+                        <button id="btn-clear-filters" class="btn secondary btn-sm"><i data-lucide="x"></i> Clear</button>
+                        <button id="btn-export-csv" class="btn accent btn-sm"><i data-lucide="download"></i> Export CSV</button>
+                    </div>
+                </div>
+                <div class="table-container glass-panel">
+                    <div class="table-loading" id="logs-loading">
+                        <div class="spinner"></div>
+                        <p>Loading attendance logs...</p>
+                    </div>
+                    <table class="data-table" id="logs-table">
+                        <thead>
+                            <tr>
+                                <th>Student ID</th>
+                                <th>Roll No</th>
+                                <th>Name</th>
+                                <th>Department</th>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logs-tbody">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                    <div class="empty-state" id="logs-empty" style="display:none;">
+                        <i data-lucide="calendar-x"></i>
+                        <h3>No attendance records</h3>
+                        <p>Attendance records will appear here once marked.</p>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Edit Student Modal -->
+    <div class="modal-overlay" id="edit-modal">
+        <div class="modal glass-panel">
+            <div class="modal-header">
+                <h2>Edit Student</h2>
+                <button class="modal-close-btn" id="modal-close-btn"><i data-lucide="x"></i></button>
+            </div>
+            <form id="edit-form">
+                <input type="hidden" id="edit-id">
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label for="edit-name">Full Name</label>
+                        <input type="text" id="edit-name">
+                    </div>
+                    <!-- Other edit fields kept simple for brevity, they match register form -->
+                    <div class="input-group"><label for="edit-dept">Department</label><input type="text" id="edit-dept"></div>
+                    <div class="input-group"><label for="edit-course">Course</label><input type="text" id="edit-course"></div>
+                    <div class="input-group"><label for="edit-year">Year</label><input type="text" id="edit-year"></div>
+                    <div class="input-group"><label for="edit-sem">Semester</label><input type="text" id="edit-sem"></div>
+                    <div class="input-group"><label for="edit-div">Division</label><input type="text" id="edit-div"></div>
+                    <div class="input-group"><label for="edit-roll">Roll No</label><input type="number" id="edit-roll" min="1"></div>
+                    <div class="input-group">
+                        <label for="edit-gender">Gender</label>
+                        <select id="edit-gender"><option>Male</option><option>Female</option><option>Other</option></select>
+                    </div>
+                    <div class="input-group"><label for="edit-dob">DOB</label><input type="date" id="edit-dob"></div>
+                    <div class="input-group"><label for="edit-email">Email</label><input type="email" id="edit-email"></div>
+                    <div class="input-group"><label for="edit-phone">Phone</label><input type="text" id="edit-phone"></div>
+                    <div class="input-group full-width"><label for="edit-address">Address</label><input type="text" id="edit-address"></div>
+                    <div class="input-group full-width"><label for="edit-teacher">Teacher / Mentor</label><input type="text" id="edit-teacher"></div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn secondary" id="modal-cancel-btn">Cancel</button>
+                    <button type="submit" class="btn primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Initialize Lucide Icons -->
+    <script>lucide.createIcons();</script>
+    <script src="app.js"></script>
+</body>
+</html>
